@@ -88,6 +88,22 @@
             border-color: #000 #dfdfdf #dfdfdf #000;
         }
 
+        /* ปุ่มจ่ายเงิน */
+        button.pay-btn {
+            background: #c0c0c0;
+            border: 2px solid;
+            border-color: #dfdfdf #000 #000 #dfdfdf;
+            padding: 4px 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            color: #000080;
+        }
+
+        button.pay-btn:active {
+            border-color: #000 #dfdfdf #dfdfdf #000;
+        }
+
         /* Table Desktop Styles */
         table {
             border-collapse: collapse;
@@ -130,14 +146,60 @@
             font-size: 18px;
         }
 
+        /* --- Modal (Popup จ่ายเงิน) Styles --- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-window {
+            background-color: #c0c0c0;
+            border: 2px solid;
+            border-color: #dfdfdf #000000 #000000 #dfdfdf;
+            width: 90%;
+            max-width: 350px;
+            box-shadow: 5px 5px 0px rgba(0,0,0,0.5);
+        }
+
+        .qr-container {
+            background: white;
+            padding: 10px;
+            border: 2px inset #fff;
+            margin: 10px auto;
+            text-align: center;
+            width: fit-content;
+        }
+
+        .qr-container img {
+            width: 200px;
+            height: 200px;
+            image-rendering: pixelated;
+        }
+
+        .payment-info {
+            text-align: left;
+            background: #fff;
+            border: 1px solid #808080;
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .payment-info p { margin: 5px 0; }
+
         /* --- Mobile Responsive Styles --- */
         @media screen and (max-width: 600px) {
             body {
-                padding: 10px; /* ลดขอบจอลงบนมือถือ */
+                padding: 10px;
             }
 
             .window {
-                box-shadow: 3px 3px 0px rgba(0,0,0,0.5); /* ปรับเงาให้เล็กลง */
+                box-shadow: 3px 3px 0px rgba(0,0,0,0.5);
             }
 
             .header-controls {
@@ -156,10 +218,9 @@
 
             button.refresh {
                 padding: 10px;
-                font-size: 16px; /* ทำให้ปุ่มใหญ่ขึ้น กดง่าย */
+                font-size: 16px;
             }
 
-            /* เปลี่ยนตารางเป็นการ์ด */
             table, thead, tbody, th, td, tr {
                 display: block;
             }
@@ -172,7 +233,7 @@
 
             tr {
                 border: 2px solid;
-                border-color: #dfdfdf #000 #000 #dfdfdf; /* ทำขอบแต่ละคิวให้ดูนูนเหมือนปุ่ม 3D */
+                border-color: #dfdfdf #000 #000 #dfdfdf;
                 margin-bottom: 15px;
                 background-color: #c0c0c0;
             }
@@ -181,7 +242,7 @@
                 border: none;
                 border-bottom: 1px solid #808080;
                 position: relative;
-                padding: 10px 10px 10px 50%; /* เว้นที่ด้านซ้ายไว้ใส่ชื่อหัวข้อ */
+                padding: 10px 10px 10px 50%;
                 text-align: right;
                 background-color: #fff;
                 min-height: 20px;
@@ -189,9 +250,15 @@
 
             td:last-child {
                 border-bottom: none;
+                background-color: #e0e0e0; /* เน้นโซนปุ่มกด */
+                text-align: center;
+                padding: 10px; /* เอาเว้นซ้ายออกสำหรับปุ่ม */
             }
 
-            /* เพิ่มชื่อหัวข้อเข้าไปด้านหน้าข้อมูลบนมือถือ */
+            td:last-child:before {
+                display: none; /* ซ่อน label ชำระเงิน */
+            }
+
             td:before {
                 position: absolute;
                 top: 10px;
@@ -204,7 +271,6 @@
                 color: #000;
             }
 
-            /* กำหนดชื่อหัวข้อของแต่ละแถว */
             td:nth-of-type(1):before { content: "ลำดับที่ :"; }
             td:nth-of-type(2):before { content: "สถานะ :"; }
             td:nth-of-type(3):before { content: "เริ่มจ่าย (ล่าสุด) :"; }
@@ -214,6 +280,35 @@
     </style>
 </head>
 <body>
+
+<!-- หน้าต่าง Popup สำหรับสแกนจ่าย -->
+<div id="paymentModal" class="modal-overlay">
+    <div class="modal-window">
+        <div class="title-bar">
+            <span>💳 Payment_Gateway.exe</span>
+            <div class="title-bar-controls">
+                <div class="btn-control" onclick="closePayment()">X</div>
+            </div>
+        </div>
+        <div class="window-content" style="text-align: center;">
+            <h3 style="margin-top: 0; color: #000080;">สแกนชำระเงิน</h3>
+            <p style="margin-bottom: 5px; font-weight: bold;">ทำรายการสำหรับ: <span id="paySlot" style="color: red;"></span></p>
+            
+            <div class="qr-container">
+                <!-- ใช้ API สร้าง QR พร้อมเพย์ยอด 800 บาทอัตโนมัติ -->
+                <img src="https://promptpay.io/1749700003240/800.png" alt="PromptPay QR">
+            </div>
+
+            <div class="payment-info">
+                <p><b>พร้อมเพย์:</b> 1749700003240</p>
+                <p><b>ชื่อบัญชี:</b> เชิญตวรรณ พิศเพ็ง</p>
+                <p><b>ยอดที่ต้องชำระ:</b> <span style="color:red; font-weight:bold; font-size:16px;">800 บาท</span></p>
+            </div>
+
+            <button class="refresh" style="width: 100%;" onclick="closePayment()">ปิดหน้าต่าง (Close)</button>
+        </div>
+    </div>
+</div>
 
 <div class="window">
     <div class="title-bar">
@@ -226,7 +321,7 @@
     </div>
     
     <div class="window-content">
-        <marquee scrollamount="5">ยินดีต้อนรับสู่ระบบจัดการ YouTube รายปี! :: ขอบคุณสำหรับการใช้บริการอย่างเหนียวแน่นมาตลอด 3000 ปี :: Server Online!</marquee>
+        <marquee scrollamount="5">ยินดีต้อนรับสู่ระบบจัดการ YouTube รายปี! :: หากถึงกำหนดชำระ กรุณากดปุ่ม 'กดจ่าย' :: Server Online!</marquee>
         
         <div class="header-controls">
             <p><b>โครงการ:</b> ตาราง Youtube รายปี 800/คน</p>
@@ -243,6 +338,7 @@
                     <th>วันเริ่มจ่าย (ล่าสุด)</th>
                     <th>วันที่ต้องจ่ายรอบถัดไป</th>
                     <th>ระยะเวลาที่เหลือ</th>
+                    <th>ชำระเงิน</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
@@ -258,8 +354,17 @@
 </div>
 
 <script>
-    // นี่คือลิงก์ Web App API ของคุณ
     const url = 'https://script.google.com/macros/s/AKfycbw0697oWdcAhCrhVsjt2JHummlVbs8EaMFQzJBIYogNDOzPa-KGlGF-pGPSQ_E7ITtF/exec';
+
+    // ฟังก์ชันเปิด-ปิด หน้าต่างจ่ายเงิน
+    function openPayment(slotName) {
+        document.getElementById('paySlot').innerText = slotName;
+        document.getElementById('paymentModal').style.display = 'flex';
+    }
+
+    function closePayment() {
+        document.getElementById('paymentModal').style.display = 'none';
+    }
 
     function calculateTimeRemaining(dateStr) {
         if (!dateStr) return { text: "-", class: "" };
@@ -277,7 +382,6 @@
         const nextPaymentDate = new Date(yearCE + 1, month, day);
         const today = new Date();
 
-        // รีเซ็ตเวลาของวันนี้เป็นเที่ยงคืน เพื่อการคำนวณวันที่แม่นยำ
         today.setHours(0, 0, 0, 0);
         
         const diffTime = nextPaymentDate - today;
@@ -316,16 +420,15 @@
         
         fetch(url)
             .then(res => {
-                if (!res.ok) throw new Error('การตอบสนองจากเซิร์ฟเวอร์ผิดพลาด (อาจติดเรื่องสิทธิ์ Anyone)');
+                if (!res.ok) throw new Error('การตอบสนองจากเซิร์ฟเวอร์ผิดพลาด');
                 return res.json();
             })
             .then(data => {
-                console.log("ข้อมูลที่ดึงมาได้ (เอาไว้ตรวจใน Console):", data);
                 const tbody = document.getElementById('tableBody');
                 tbody.innerHTML = ''; 
 
                 if (!Array.isArray(data) || data.length === 0) {
-                    document.getElementById('loading').innerHTML = "<span style='color:red;'>ดึงข้อมูลผ่านแล้ว แต่ไม่พบข้อมูล (เช็คว่าหน้า Sheet มีข้อมูล หรือตั้งชื่อคอลัมน์ตรงไหม)</span>";
+                    document.getElementById('loading').innerHTML = "<span style='color:red;'>ไม่พบข้อมูล</span>";
                     return;
                 }
 
@@ -334,7 +437,6 @@
                     const status = row['สถานะ'] || '-';
                     const dateStr = row['วันเดือนปี'] || '';
 
-                    // ถ้าเป็นแถวว่าง ให้ข้ามไป
                     if (!slot || slot === '-') return;
 
                     const timing = calculateTimeRemaining(dateStr);
@@ -342,6 +444,12 @@
                     let statusClass = '';
                     if (status.includes('จ่ายแล้ว')) statusClass = 'status-paid';
                     else statusClass = 'status-pending';
+
+                    // เช็คว่าถึงกำหนดจ่ายหรือยัง (เหลือน้อยกว่า 15 วัน หรือ เลยกำหนด)
+                    const isTimeToPay = (timing.class === 'warning' || timing.class === 'overdue');
+                    const payBtnHTML = isTimeToPay 
+                        ? `<button class="pay-btn" onclick="openPayment('${slot}')">💳 กดจ่าย</button>`
+                        : `<span style="color: #808080; font-size: 12px; font-weight: normal;">ยังไม่ถึงกำหนด</span>`;
 
                     const tr = document.createElement('tr');
                     if (timing.class === 'overdue') tr.style.backgroundColor = '#ffcccc';
@@ -352,6 +460,7 @@
                         <td>${dateStr}</td>
                         <td style="font-weight:bold;">${timing.nextDate}</td>
                         <td class="${timing.class}">${timing.text}</td>
+                        <td>${payBtnHTML}</td>
                     `;
                     tbody.appendChild(tr);
                 });
@@ -360,12 +469,10 @@
                 document.getElementById('dataTable').style.display = 'table';
             })
             .catch(error => {
-                console.error("Error fetching data:", error);
-                document.getElementById('loading').innerHTML = `<span style='color:red;'>ดึงข้อมูลล้มเหลว: ${error.message} <br>(กรุณาเช็คว่าทำขั้นตอน Deploy แบบ New Version > Anyone ถูกต้องแล้ว)</span>`;
+                document.getElementById('loading').innerHTML = `<span style='color:red;'>ดึงข้อมูลล้มเหลว: ${error.message}</span>`;
             });
     }
 
-    // โหลดข้อมูลอัตโนมัติเมื่อเปิดหน้าเว็บ
     window.onload = fetchData;
 </script>
 
