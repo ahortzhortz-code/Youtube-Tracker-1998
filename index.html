@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Premium Tracker '98</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;700&display=swap');
+
+        body {
+            background-color: #008080;
+            font-family: 'MS Sans Serif', 'Chakra Petch', Tahoma, sans-serif;
+            color: #000;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .window {
+            background-color: #c0c0c0;
+            border: 2px solid;
+            border-color: #dfdfdf #000000 #000000 #dfdfdf;
+            max-width: 900px;
+            margin: 0 auto;
+            box-shadow: 5px 5px 0px rgba(0,0,0,0.5);
+        }
+
+        .title-bar {
+            background: linear-gradient(to right, #000080, #1084d0);
+            color: white;
+            padding: 3px 5px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            letter-spacing: 1px;
+        }
+
+        .title-bar-controls {
+            display: flex;
+            gap: 2px;
+        }
+
+        .btn-control {
+            background-color: #c0c0c0;
+            border: 2px solid;
+            border-color: #dfdfdf #000 #000 #dfdfdf;
+            width: 16px;
+            height: 14px;
+            font-size: 10px;
+            line-height: 10px;
+            text-align: center;
+            cursor: pointer;
+            color: black;
+            font-weight: bold;
+        }
+
+        .window-content {
+            padding: 15px;
+        }
+
+        marquee {
+            background-color: #000;
+            color: #00ff00;
+            padding: 5px;
+            font-family: monospace;
+            border: inset 2px #fff;
+            margin-bottom: 15px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            background-color: #fff;
+            border: 2px solid #808080;
+        }
+
+        th, td {
+            border: 1px solid #c0c0c0;
+            padding: 6px 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #c0c0c0;
+            border: 1px solid;
+            border-color: #dfdfdf #808080 #808080 #dfdfdf;
+        }
+
+        .status-paid { color: blue; font-weight: bold; }
+        .status-pending { color: red; font-weight: bold; text-decoration: blink; }
+        .overdue { background-color: #ffcccc; color: red; font-weight: bold; }
+        .warning { background-color: #ffffcc; color: #b38f00; font-weight: bold;}
+        .good { color: green; font-weight: bold;}
+
+        button.refresh {
+            background: #c0c0c0;
+            border: 2px solid;
+            border-color: #dfdfdf #000 #000 #dfdfdf;
+            padding: 5px 15px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        button.refresh:active {
+            border-color: #000 #dfdfdf #dfdfdf #000;
+        }
+
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 12px;
+            border-top: 2px groove #fff;
+            padding-top: 10px;
+        }
+
+        #loading {
+            text-align: center;
+            font-weight: bold;
+            color: blue;
+            margin: 20px 0;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="window">
+    <div class="title-bar">
+        <span>📺 YouTube_Premium_Tracker.exe</span>
+        <div class="title-bar-controls">
+            <div class="btn-control">_</div>
+            <div class="btn-control">□</div>
+            <div class="btn-control">X</div>
+        </div>
+    </div>
+    
+    <div class="window-content">
+        <marquee scrollamount="5">ยินดีต้อนรับสู่ระบบจัดการ YouTube รายปี! :: กำลังเชื่อมต่อฐานข้อมูลส่วนตัวของคุณผ่าน Apps Script... :: Server Online!</marquee>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <p><b>โครงการ:</b> ตาราง Youtube รายปีตลอดไป 800/คน</p>
+            <button class="refresh" onclick="fetchData()">🔄 โหลดข้อมูลใหม่ (Refresh)</button>
+        </div>
+
+        <div id="loading">กำลังดาวน์โหลดข้อมูลจากเซิร์ฟเวอร์... <img src="https://i.gifer.com/ZZ5H.gif" height="15" alt="loading"></div>
+
+        <table id="dataTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th>ลำดับที่</th>
+                    <th>สถานะ</th>
+                    <th>วันเริ่มจ่าย (ล่าสุด)</th>
+                    <th>วันที่ต้องจ่ายรอบถัดไป</th>
+                    <th>ระยะเวลาที่เหลือ</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- ข้อมูลจะถูกแทรกที่นี่ -->
+            </tbody>
+        </table>
+
+        <div class="footer">
+            <p>Best viewed in Netscape Navigator or Internet Explorer 4.0 at 800x600 resolution.</p>
+            <p>Copyright © 1998 YouTube Tracker Inc.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // นี่คือลิงก์ Web App API ของคุณ
+    const url = 'https://script.google.com/macros/s/AKfycbw0697oWdcAhCrhVsjt2JHummlVbs8EaMFQzJBIYogNDOzPa-KGlGF-pGPSQ_E7ITtF/exec';
+
+    function calculateTimeRemaining(dateStr) {
+        if (!dateStr) return { text: "-", class: "" };
+        
+        const parts = dateStr.split('/');
+        if (parts.length !== 3) return { text: "รูปแบบวันผิด", class: "", nextDate: "-" };
+
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1; 
+        const yearBE_short = parseInt(parts[2], 10);
+        
+        const yearCE = 2500 + yearBE_short - 543; 
+
+        const startDate = new Date(yearCE, month, day);
+        const nextPaymentDate = new Date(yearCE + 1, month, day);
+        const today = new Date();
+
+        // รีเซ็ตเวลาของวันนี้เป็นเที่ยงคืน เพื่อการคำนวณวันที่แม่นยำ
+        today.setHours(0, 0, 0, 0);
+        
+        const diffTime = nextPaymentDate - today;
+        const diffDaysTotal = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        const nextDateStr = `${day.toString().padStart(2,'0')}/${(month+1).toString().padStart(2,'0')}/${yearBE_short+1}`;
+
+        if (diffDaysTotal < 0) {
+            return { text: `เลยกำหนดมาแล้ว ${Math.abs(diffDaysTotal)} วัน!`, class: "overdue", nextDate: nextDateStr };
+        } else if (diffDaysTotal === 0) {
+            return { text: "ครบกำหนดชำระวันนี้!", class: "warning", nextDate: nextDateStr };
+        }
+
+        let mDiff = nextPaymentDate.getMonth() - today.getMonth() + (12 * (nextPaymentDate.getFullYear() - today.getFullYear()));
+        let dDiff = nextPaymentDate.getDate() - today.getDate();
+
+        if (dDiff < 0) {
+            mDiff--;
+            const prevMonthDate = new Date(nextPaymentDate.getFullYear(), nextPaymentDate.getMonth(), 0).getDate();
+            dDiff = prevMonthDate - today.getDate() + nextPaymentDate.getDate();
+        }
+
+        let timeText = "อีก ";
+        if (mDiff > 0) timeText += `${mDiff} เดือน `;
+        if (dDiff > 0) timeText += `${dDiff} วัน`;
+
+        let rowClass = "good";
+        if (mDiff === 0 && dDiff <= 15) rowClass = "warning"; 
+
+        return { text: timeText, class: rowClass, nextDate: nextDateStr };
+    }
+
+    function fetchData() {
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('dataTable').style.display = 'none';
+        
+        fetch(url)
+            .then(res => {
+                if (!res.ok) throw new Error('การตอบสนองจากเซิร์ฟเวอร์ผิดพลาด (อาจติดเรื่องสิทธิ์ Anyone)');
+                return res.json();
+            })
+            .then(data => {
+                console.log("ข้อมูลที่ดึงมาได้ (เอาไว้ตรวจใน Console):", data);
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = ''; 
+
+                if (!Array.isArray(data) || data.length === 0) {
+                    document.getElementById('loading').innerHTML = "<span style='color:red;'>ดึงข้อมูลผ่านแล้ว แต่ไม่พบข้อมูล (เช็คว่าหน้า Sheet มีข้อมูล หรือตั้งชื่อคอลัมน์ตรงไหม)</span>";
+                    return;
+                }
+
+                data.forEach(row => {
+                    const slot = row['ลำดับที่'] || '-';
+                    const status = row['สถานะ'] || '-';
+                    const dateStr = row['วันเดือนปี'] || '';
+
+                    // ถ้าเป็นแถวว่าง ให้ข้ามไป
+                    if (!slot || slot === '-') return;
+
+                    const timing = calculateTimeRemaining(dateStr);
+
+                    let statusClass = '';
+                    if (status.includes('จ่ายแล้ว')) statusClass = 'status-paid';
+                    else statusClass = 'status-pending';
+
+                    const tr = document.createElement('tr');
+                    if (timing.class === 'overdue') tr.style.backgroundColor = '#ffcccc';
+
+                    tr.innerHTML = `
+                        <td>${slot}</td>
+                        <td class="${statusClass}">${status}</td>
+                        <td>${dateStr}</td>
+                        <td style="font-weight:bold;">${timing.nextDate}</td>
+                        <td class="${timing.class}">${timing.text}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dataTable').style.display = 'table';
+            })
+            .catch(error => {
+                console.error("Error fetching data:", error);
+                document.getElementById('loading').innerHTML = `<span style='color:red;'>ดึงข้อมูลล้มเหลว: ${error.message} <br>(กรุณาเช็คว่าทำขั้นตอน Deploy แบบ New Version > Anyone ถูกต้องแล้ว)</span>`;
+            });
+    }
+
+    // โหลดข้อมูลอัตโนมัติเมื่อเปิดหน้าเว็บ
+    window.onload = fetchData;
+</script>
+
+</body>
+</html>
