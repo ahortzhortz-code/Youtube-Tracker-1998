@@ -191,6 +191,17 @@
         }
 
         .payment-info p { margin: 5px 0; }
+        
+        .alert-text {
+            color: #0000ff;
+            font-weight: bold;
+            text-align: center;
+            background-color: #e6e6ff;
+            border: 1px dotted #0000ff;
+            padding: 5px;
+            margin-top: 10px;
+            font-size: 13px;
+        }
 
         /* --- Mobile Responsive Styles --- */
         @media screen and (max-width: 600px) {
@@ -295,14 +306,19 @@
             <p style="margin-bottom: 5px; font-weight: bold;">ทำรายการสำหรับ: <span id="paySlot" style="color: red;"></span></p>
             
             <div class="qr-container">
-                <!-- ใช้ API สร้าง QR พร้อมเพย์ยอด 800 บาทอัตโนมัติ -->
-                <img src="https://promptpay.io/1749700003240/800.png" alt="PromptPay QR">
+                <!-- QR Code จะถูกอัปเดต src ด้วย Javascript -->
+                <img id="qrImage" src="" alt="PromptPay QR">
             </div>
 
             <div class="payment-info">
                 <p><b>พร้อมเพย์:</b> 1749700003240</p>
                 <p><b>ชื่อบัญชี:</b> เชิญตวรรณ พิศเพ็ง</p>
-                <p><b>ยอดที่ต้องชำระ:</b> <span style="color:red; font-weight:bold; font-size:16px;">800 บาท</span></p>
+                <p><b>ยอดที่ต้องชำระ:</b> <span id="payAmount" style="color:red; font-weight:bold; font-size:16px;"></span></p>
+                
+                <!-- แจ้งเตือนเรื่องการส่งสลิป -->
+                <div class="alert-text">
+                    ⚠️ เมื่อโอนเงินเสร็จแล้ว<br>กรุณาส่งสลิปให้ด้วยน๊าาา<br>เพื่อทำการอัปเดตสถานะในระบบ
+                </div>
             </div>
 
             <button class="refresh" style="width: 100%;" onclick="closePayment()">ปิดหน้าต่าง (Close)</button>
@@ -321,10 +337,10 @@
     </div>
     
     <div class="window-content">
-        <marquee scrollamount="5">ยินดีต้อนรับสู่ระบบจัดการ YouTube รายปี! :: หากถึงกำหนดชำระ กรุณากดปุ่ม 'กดจ่าย' :: Server Online!</marquee>
+        <marquee scrollamount="5">ยินดีต้อนรับสู่ระบบจัดการ YouTube รายปี! :: ขอบคุณสำหรับการร่วมหารยูทูปมาตลอด 3452 ปี!! :: จุ๊บเหมียว :: Server Online!</marquee>
         
         <div class="header-controls">
-            <p><b>โครงการ:</b> ตาราง Youtube รายปี 800/คน</p>
+            <p><b>โครงการ:</b> ตาราง Youtube รายปีตลอดไป</p>
             <button class="refresh" onclick="fetchData()">🔄 โหลดข้อมูลใหม่ (Refresh)</button>
         </div>
 
@@ -356,9 +372,14 @@
 <script>
     const url = 'https://script.google.com/macros/s/AKfycbw0697oWdcAhCrhVsjt2JHummlVbs8EaMFQzJBIYogNDOzPa-KGlGF-pGPSQ_E7ITtF/exec';
 
-    // ฟังก์ชันเปิด-ปิด หน้าต่างจ่ายเงิน
-    function openPayment(slotName) {
+    // ฟังก์ชันเปิด-ปิด หน้าต่างจ่ายเงิน (รับค่าตัวแปร price เพิ่มเข้ามา)
+    function openPayment(slotName, price) {
         document.getElementById('paySlot').innerText = slotName;
+        // อัปเดตยอดเงินในข้อความ
+        document.getElementById('payAmount').innerText = price + ' บาท';
+        // อัปเดต QR Code ตามยอดเงินที่ส่งมา
+        document.getElementById('qrImage').src = `https://promptpay.io/1749700003240/${price}.png`;
+        
         document.getElementById('paymentModal').style.display = 'flex';
     }
 
@@ -436,6 +457,9 @@
                     const slot = row['ลำดับที่'] || '-';
                     const status = row['สถานะ'] || '-';
                     const dateStr = row['วันเดือนปี'] || '';
+                    
+                    // ดึงราคาจากคอลัมน์ชื่อ "ราคา" ถ้าหาไม่เจอให้ใช้ "800" เป็นค่าเริ่มต้น
+                    const price = row['ราคา'] || '800'; 
 
                     if (!slot || slot === '-') return;
 
@@ -447,8 +471,10 @@
 
                     // เช็คว่าถึงกำหนดจ่ายหรือยัง (เหลือน้อยกว่า 15 วัน หรือ เลยกำหนด)
                     const isTimeToPay = (timing.class === 'warning' || timing.class === 'overdue');
+                    
+                    // แทรกค่า price ลงไปในฟังก์ชัน openPayment()
                     const payBtnHTML = isTimeToPay 
-                        ? `<button class="pay-btn" onclick="openPayment('${slot}')">💳 กดจ่าย</button>`
+                        ? `<button class="pay-btn" onclick="openPayment('${slot}', '${price}')">💳 กดจ่าย</button>`
                         : `<span style="color: #808080; font-size: 12px; font-weight: normal;">ยังไม่ถึงกำหนด</span>`;
 
                     const tr = document.createElement('tr');
