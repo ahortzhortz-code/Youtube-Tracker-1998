@@ -67,6 +67,28 @@
             margin-bottom: 15px;
         }
 
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        button.refresh {
+            background: #c0c0c0;
+            border: 2px solid;
+            border-color: #dfdfdf #000 #000 #dfdfdf;
+            padding: 5px 15px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+        }
+
+        button.refresh:active {
+            border-color: #000 #dfdfdf #dfdfdf #000;
+        }
+
+        /* Table Desktop Styles */
         table {
             border-collapse: collapse;
             width: 100%;
@@ -92,21 +114,6 @@
         .warning { background-color: #ffffcc; color: #b38f00; font-weight: bold;}
         .good { color: green; font-weight: bold;}
 
-        button.refresh {
-            background: #c0c0c0;
-            border: 2px solid;
-            border-color: #dfdfdf #000 #000 #dfdfdf;
-            padding: 5px 15px;
-            cursor: pointer;
-            font-family: inherit;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        button.refresh:active {
-            border-color: #000 #dfdfdf #dfdfdf #000;
-        }
-
         .footer {
             margin-top: 20px;
             text-align: center;
@@ -121,6 +128,88 @@
             color: blue;
             margin: 20px 0;
             font-size: 18px;
+        }
+
+        /* --- Mobile Responsive Styles --- */
+        @media screen and (max-width: 600px) {
+            body {
+                padding: 10px; /* ลดขอบจอลงบนมือถือ */
+            }
+
+            .window {
+                box-shadow: 3px 3px 0px rgba(0,0,0,0.5); /* ปรับเงาให้เล็กลง */
+            }
+
+            .header-controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            .header-controls p {
+                margin: 0;
+                text-align: center;
+                background-color: #fff;
+                padding: 5px;
+                border: 1px inset #fff;
+            }
+
+            button.refresh {
+                padding: 10px;
+                font-size: 16px; /* ทำให้ปุ่มใหญ่ขึ้น กดง่าย */
+            }
+
+            /* เปลี่ยนตารางเป็นการ์ด */
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+
+            thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+
+            tr {
+                border: 2px solid;
+                border-color: #dfdfdf #000 #000 #dfdfdf; /* ทำขอบแต่ละคิวให้ดูนูนเหมือนปุ่ม 3D */
+                margin-bottom: 15px;
+                background-color: #c0c0c0;
+            }
+
+            td {
+                border: none;
+                border-bottom: 1px solid #808080;
+                position: relative;
+                padding: 10px 10px 10px 50%; /* เว้นที่ด้านซ้ายไว้ใส่ชื่อหัวข้อ */
+                text-align: right;
+                background-color: #fff;
+                min-height: 20px;
+            }
+
+            td:last-child {
+                border-bottom: none;
+            }
+
+            /* เพิ่มชื่อหัวข้อเข้าไปด้านหน้าข้อมูลบนมือถือ */
+            td:before {
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left;
+                font-weight: bold;
+                color: #000;
+            }
+
+            /* กำหนดชื่อหัวข้อของแต่ละแถว */
+            td:nth-of-type(1):before { content: "ลำดับที่ :"; }
+            td:nth-of-type(2):before { content: "สถานะ :"; }
+            td:nth-of-type(3):before { content: "เริ่มจ่าย (ล่าสุด) :"; }
+            td:nth-of-type(4):before { content: "จ่ายรอบถัดไป :"; }
+            td:nth-of-type(5):before { content: "ระยะเวลาที่เหลือ :"; }
         }
     </style>
 </head>
@@ -139,8 +228,8 @@
     <div class="window-content">
         <marquee scrollamount="5">ยินดีต้อนรับสู่ระบบจัดการ YouTube รายปี! :: กำลังเชื่อมต่อฐานข้อมูลส่วนตัวของคุณผ่าน Apps Script... :: Server Online!</marquee>
         
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <p><b>โครงการ:</b> ตาราง Youtube รายปีตลอดไป 800/คน</p>
+        <div class="header-controls">
+            <p><b>โครงการ:</b> ตาราง Youtube รายปี 800/คน</p>
             <button class="refresh" onclick="fetchData()">🔄 โหลดข้อมูลใหม่ (Refresh)</button>
         </div>
 
